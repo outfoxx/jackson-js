@@ -115,7 +115,7 @@ export class JsonParser<T> {
       forType: new Map(),
       withContextGroups: [],
       _internalDecorators: new Map(),
-      _propertyParentCreator: null,
+      _propertyParent: null,
       injectableValues: {},
       withCreatorName: null
     };
@@ -179,8 +179,8 @@ export class JsonParser<T> {
           ...context._internalDecorators]
         );
       }
-      if (context._propertyParentCreator != null) {
-        finalContext._propertyParentCreator = context._propertyParentCreator;
+      if (context._propertyParent != null) {
+        finalContext._propertyParent = context._propertyParent;
       }
     }
     finalContext.deserializers = sortMappersByOrder(finalContext.deserializers);
@@ -217,7 +217,10 @@ export class JsonParser<T> {
 
     newContext.mainCreator = (newContext.mainCreator && newContext.mainCreator[0] !== Object) ?
       newContext.mainCreator : [(value != null) ? value.constructor : Object];
-    newContext._propertyParentCreator = newContext.mainCreator[0];
+    newContext._propertyParent = {
+      creator: newContext.mainCreator[0],
+      value: null,
+    };
     newContext._internalDecorators = new Map();
     newContext = cloneDeep(newContext);
 
@@ -249,7 +252,11 @@ export class JsonParser<T> {
       _internalDecorators: new Map(),
       ...context
     };
-    context = cloneDeep(context);
+    context = {
+      ...cloneDeep(context),
+      _propertyParent: context._propertyParent,
+      syntheticKeys: context.syntheticKeys,
+    };
 
     if (value != null && context._internalDecorators != null &&
       context._internalDecorators.size > 0) {
@@ -324,8 +331,8 @@ export class JsonParser<T> {
       isConstructorPrimitiveType(currentMainCreator)) {
       // eslint-disable-next-line max-len
       throw new JacksonError(`Cannot map "${value}" into primitive type ${(currentMainCreator as ObjectConstructor).name}` +
-        ( (context._propertyParentCreator != null && context._propertyParentCreator !== Object && key !== '') ?
-          ` for ${context._propertyParentCreator.name}["${key}"]` :
+        ( (context._propertyParent != null && context._propertyParent.creator !== Object && key !== '') ?
+          ` for ${context._propertyParent.creator.name}["${key}"]` :
           (key !== '' ? ' for property ' + key : '') ));
     }
 
@@ -690,8 +697,13 @@ export class JsonParser<T> {
                            obj: any, classPropertiesToBeExcluded: string[]): any {
     if (obj != null) {
 
+      context = cloneDeep(context);
       const currentMainCreator = context.mainCreator[0];
-      context._propertyParentCreator = currentMainCreator;
+      context._propertyParent = {
+        creator: currentMainCreator,
+        value: obj,
+      };
+      context.syntheticKeys = [];
 
       const withCreatorName = context.withCreatorName;
 
@@ -766,6 +778,7 @@ export class JsonParser<T> {
         });
 
         const remainingKeys = classKeys.filter(k => Object.hasOwnProperty.call(obj, k) && !keysToBeExcluded.includes(k));
+        let unknownKeys: string[] = [];
 
         const hasJsonAnySetter =
           hasMetadata('JsonAnySetter', currentMainCreator, null, context);
@@ -790,11 +803,17 @@ export class JsonParser<T> {
             // for any other unrecognized properties found
             this.parseJsonAnySetter(instance, obj, key, context);
           } else if (!classHasOwnProperty(currentMainCreator, key, null, context) &&
+            !context.syntheticKeys?.includes(key) &&
             ( (jsonIgnoreProperties == null && context.features.deserialization.FAIL_ON_UNKNOWN_PROPERTIES) ||
-              (jsonIgnoreProperties != null && !jsonIgnoreProperties.ignoreUnknown)) ) {
-            // eslint-disable-next-line max-len
-            throw new JacksonError(`Unknown property "${key}" for ${currentMainCreator.name} at [Source '${JSON.stringify(obj)}']`);
+              (jsonIgnoreProperties != null && !jsonIgnoreProperties.ignoreUnknown))) {
+            unknownKeys.push(key);
           }
+        }
+
+        unknownKeys = unknownKeys.filter(k => !context.syntheticKeys.includes(k));
+        if (unknownKeys.length) {
+          // eslint-disable-next-line max-len
+          throw new JacksonError(`Unknown properties [${unknownKeys.map(k => `"${k}"`).join(', ')}] for ${currentMainCreator.name} at [Source '${JSON.stringify(obj)}']`);
         }
       }
 
@@ -1167,7 +1186,10 @@ export class JsonParser<T> {
     }
     this.propagateDecorators(jsonClass, obj, key, context, methodName, argumentIndex);
 
-    const newContext = cloneDeep(context);
+    const newContext = {
+      ...cloneDeep(context),
+      syntheticKeys: context.syntheticKeys,
+    };
 
     if (jsonClass && jsonClass.type) {
       newContext.mainCreator = jsonClass.type();
@@ -1431,6 +1453,20 @@ export class JsonParser<T> {
         jsonTypeInfoProperty = newObj[0] as string;
         newObj = newObj[1];
         break;
+      case JsonTypeInfoAs.EXTERNAL_PROPERTY:
+        const srcObj = context._propertyParent?.value ?? newObj;
+        jsonTypeInfoProperty = srcObj[jsonTypeInfo.property];
+        if (jsonTypeInfoProperty == null &&
+          context.features.deserialization.FAIL_ON_MISSING_TYPE_ID && context.features.deserialization.FAIL_ON_INVALID_SUBTYPE) {
+          // eslint-disable-next-line max-len
+          throw new JacksonError(`Missing type id when trying to resolve type or subtype of class ${currentMainCreator.name}: missing type id property '${jsonTypeInfo.property}' at [Source '${JSON.stringify(newObj)}']`);
+        } else {
+          delete srcObj[jsonTypeInfo.property];
+          const syntheticKeys = context.syntheticKeys ?? [];
+          syntheticKeys.push(jsonTypeInfo.property);
+          context.syntheticKeys = syntheticKeys;
+        }
+        break;
       }
 
       const jsonTypeIdResolver: JsonTypeIdResolverOptions =
@@ -1634,14 +1670,18 @@ export class JsonParser<T> {
                         globalContext: JsonParserGlobalContext): any {
     const jsonDeserialize: JsonDeserializeOptions =
       getMetadata('JsonDeserialize',
-        context._propertyParentCreator,
+        context._propertyParent?.creator,
         key, context);
 
     const currentCreators = context.mainCreator;
     const currentCreator = currentCreators[0];
 
     let newIterable: any;
-    const newContext = cloneDeep(context);
+    const newContext: JsonParserTransformerContext = {
+      ...cloneDeep(context),
+      _propertyParent: context._propertyParent,
+      syntheticKeys: context.syntheticKeys,
+    };
 
     if (currentCreators.length > 1 && currentCreators[1] instanceof Array) {
       newContext.mainCreator = currentCreators[1] as [ClassType<any>];
@@ -1709,7 +1749,7 @@ export class JsonParser<T> {
     const currentCreator = currentCreators[0];
 
     const jsonDeserialize: JsonDeserializeOptions =
-      getMetadata('JsonDeserialize', context._propertyParentCreator, key, context);
+      getMetadata('JsonDeserialize', context._propertyParent?.creator, key, context);
 
     let map: Map<any, any> | Record<any, any>;
 

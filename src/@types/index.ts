@@ -259,10 +259,13 @@ export interface JsonStringifierParserCommonContext<T> {
    */
   _internalDecorators?: Map<ClassType<any>, InternalDecorators>;
   /**
-   * JavaScript Class of the upper level of depth of the current pre/post transform process step.
+   * JavaScript Class & instance of the upper level of depth of the current pre/post transform process step.
    * @internal
    */
-  _propertyParentCreator?: ClassType<any>;
+  _propertyParent?: {
+    creator: ClassType<any>;
+    value: any;
+  };
 }
 
 /**
@@ -408,6 +411,11 @@ export type JsonParserTransformerContext = Modify<JsonParserContext, {
    * So, `mainCreator[0]` will return the current JavaScript Class.
    */
   mainCreator?: ClassList<ClassType<any>>;
+  /**
+   * Keys that are to be ignored/removed during the transform of a property's
+   * nested value.
+   */
+  syntheticKeys?: string[];
 }>;
 
 /**

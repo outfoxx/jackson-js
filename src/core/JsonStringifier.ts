@@ -124,7 +124,7 @@ export class JsonStringifier<T> {
       forType: new Map(),
       withContextGroups: [],
       _internalDecorators: new Map(),
-      _propertyParentCreator: null,
+      _propertyParent: null,
       attributes: {},
       filters: {},
       format: null,
@@ -203,8 +203,8 @@ export class JsonStringifier<T> {
           ...context._internalDecorators]
         );
       }
-      if (context._propertyParentCreator != null) {
-        finalContext._propertyParentCreator = context._propertyParentCreator;
+      if (context._propertyParent != null) {
+        finalContext._propertyParent = context._propertyParent;
       }
     }
     finalContext.serializers = sortMappersByOrder(finalContext.serializers);
@@ -241,7 +241,10 @@ export class JsonStringifier<T> {
 
     newContext.mainCreator = (newContext.mainCreator && newContext.mainCreator[0] !== Object) ?
       newContext.mainCreator : [(value != null) ? (value.constructor as ObjectConstructor) : Object];
-    newContext._propertyParentCreator = newContext.mainCreator[0];
+    newContext._propertyParent = {
+      creator: newContext.mainCreator[0],
+      value: null,
+    };
     newContext = cloneDeep(newContext);
 
     const currentMainCreator = newContext.mainCreator[0];
@@ -274,7 +277,10 @@ export class JsonStringifier<T> {
       _internalDecorators: new Map(),
       ...context
     };
-    context = cloneDeep(context);
+    context = {
+      ...cloneDeep(context),
+      _propertyParent: context._propertyParent,
+    };
 
     if (value != null && context._internalDecorators != null &&
       context._internalDecorators.size > 0) {
@@ -374,7 +380,10 @@ export class JsonStringifier<T> {
           }
 
           newContext.mainCreator = newMainCreator;
-          newContext._propertyParentCreator = newContext.mainCreator[0];
+          newContext._propertyParent = {
+            creator: newContext.mainCreator[0],
+            value
+          };
 
           jsonValue = castObjLiteral(newContext.mainCreator[0], jsonValue);
 
@@ -471,7 +480,10 @@ export class JsonStringifier<T> {
           for (const k in replacement) {
             const oldKey = namingMap.get(k);
             const newContext: JsonStringifierTransformerContext = cloneDeep(context);
-            newContext._propertyParentCreator = currentMainCreator;
+            newContext._propertyParent = {
+              creator: currentMainCreator,
+              value: replacement,
+            };
 
             let newMainCreator;
             const jsonClass: JsonClassTypeOptions = getMetadata('JsonClassType', currentMainCreator, oldKey, context);
@@ -966,7 +978,7 @@ export class JsonStringifier<T> {
   private stringifyHasJsonIgnoreTypeByValue(value: any, key: string, context: JsonStringifierTransformerContext): boolean {
     let classType: ClassList<ClassType<any>>;
 
-    const jsonClass: JsonClassTypeOptions = getMetadata('JsonClassType', context._propertyParentCreator, key, context);
+    const jsonClass: JsonClassTypeOptions = getMetadata('JsonClassType', context._propertyParent?.creator, key, context);
     if (jsonClass && jsonClass.type) {
       classType = jsonClass.type();
     } else {
@@ -1062,6 +1074,9 @@ export class JsonStringifier<T> {
         newReplacement = [jsonTypeName, replacement];
         replacement = newReplacement;
         break;
+      case JsonTypeInfoAs.EXTERNAL_PROPERTY:
+        const parentReplacement = context._propertyParent?.value ?? replacement;
+        parentReplacement[jsonTypeInfo.property] = jsonTypeName;
       }
 
     }
@@ -1421,7 +1436,7 @@ export class JsonStringifier<T> {
                             valueAlreadySeen: Map<any, any>): any[] {
     const jsonSerialize: JsonSerializeOptions =
       getMetadata('JsonSerialize',
-        context._propertyParentCreator,
+        context._propertyParent?.creator,
         key, context);
 
     const iterable = [...iterableNoString];
@@ -1467,12 +1482,12 @@ export class JsonStringifier<T> {
                                     valueAlreadySeen: Map<any, any>): any {
     const currentCreators = context.mainCreator;
 
-    const jsonSerialize: JsonSerializeOptions = getMetadata('JsonSerialize', context._propertyParentCreator, key, context);
+    const jsonSerialize: JsonSerializeOptions = getMetadata('JsonSerialize', context._propertyParent?.creator, key, context);
 
     let jsonInclude: JsonIncludeOptions =
-      getMetadata('JsonInclude', context._propertyParentCreator, key, context);
+      getMetadata('JsonInclude', context._propertyParent?.creator, key, context);
     if (!jsonInclude) {
-      jsonInclude = getMetadata('JsonInclude', context._propertyParentCreator, null, context);
+      jsonInclude = getMetadata('JsonInclude', context._propertyParent?.creator, null, context);
       jsonInclude = jsonInclude ? jsonInclude : context.features.serialization.DEFAULT_PROPERTY_INCLUSION;
     }
 
