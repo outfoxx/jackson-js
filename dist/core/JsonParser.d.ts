@@ -50,6 +50,7 @@ export declare class JsonParser<T> {
      *
      * @param key - key name representing the object property being postprocessed.
      * @param value - the JavaScript object or value to postprocessed.
+     * @param parent - the parent object of value (if available)
      * @param context - the context to be used during deserialization postprocessing.
      * @param globalContext - the global context to be used during deserialization postprocessing.
      */
@@ -98,6 +99,7 @@ export declare class JsonParser<T> {
      * @param context
      * @param globalContext
      * @param obj
+     * @param parent
      * @param classPropertiesToBeExcluded
      */
     private parseJsonCreator;
@@ -115,6 +117,7 @@ export declare class JsonParser<T> {
      * @param replacement
      * @param obj
      * @param key
+     * @param parent
      * @param context
      * @param globalContext
      */
@@ -124,6 +127,7 @@ export declare class JsonParser<T> {
      * @param methodName
      * @param method
      * @param obj
+     * @param parent
      * @param context
      * @param globalContext
      * @param argNames
@@ -155,6 +159,7 @@ export declare class JsonParser<T> {
      * @param globalContext
      * @param obj
      * @param key
+     * @param parent
      * @param methodName
      * @param argumentIndex
      */
@@ -208,6 +213,7 @@ export declare class JsonParser<T> {
     /**
      *
      * @param obj
+     * @param parent
      * @param context
      */
     private parseJsonTypeInfo;

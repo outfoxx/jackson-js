@@ -50,6 +50,7 @@ export declare class JsonStringifier<T> {
      *
      * @param key - key name representing the object property being preprocessed.
      * @param value - the JavaScript object or value to preprocessed.
+     * @param parent - the parent object of value (if available).
      * @param context - the context to be used during serialization preprocessing.
      * @param globalContext - the global context to be used during serialization preprocessing.
      * @param valueAlreadySeen - Map used to manage object circular references.
@@ -203,6 +204,7 @@ export declare class JsonStringifier<T> {
      *
      * @param replacement
      * @param obj
+     * @param parent
      * @param context
      */
     private stringifyJsonTypeInfo;
@@ -237,6 +239,7 @@ export declare class JsonStringifier<T> {
      *
      * @param replacement
      * @param obj
+     * @param parent
      * @param oldKey
      * @param newKey
      * @param context
