@@ -1021,7 +1021,7 @@ export interface JsonUnwrappedOptions extends JsonDecoratorOptions {
 export interface UUIDv5GeneratorOptions {
   name?: string | Array<any>;
   namespace?: string | FixedLengthArray<number, 16>;
-  buffer?: Array<any> | Buffer;
+  buffer?: Array<any> | Uint8Array | any;
   offset?: number;
 }
 
@@ -1033,7 +1033,7 @@ export interface UUIDv4GeneratorOptions {
     random?: FixedLengthArray<number, 16>;
     rng?: () => FixedLengthArray<number, 16>;
   };
-  buffer?: Array<any> | Buffer;
+  buffer?: Array<any> | Uint8Array | any;
   offset?: number;
 }
 
@@ -1043,7 +1043,7 @@ export interface UUIDv4GeneratorOptions {
 export interface UUIDv3GeneratorOptions {
   name?: string | Array<any>;
   namespace?: string | FixedLengthArray<number, 16>;
-  buffer?: Array<any> | Buffer;
+  buffer?: Array<any> | Uint8Array | any;
   offset?: number;
 }
 
@@ -1059,7 +1059,7 @@ export interface UUIDv1GeneratorOptions {
     random?: FixedLengthArray<number, 16>;
     rng?: () => FixedLengthArray<number, 16>;
   };
-  buffer?: Array<any> | Buffer;
+  buffer?: Array<any> | Uint8Array | any;
   offset?: number;
 }
 
