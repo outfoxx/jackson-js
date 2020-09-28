@@ -72,7 +72,7 @@ export declare type JsonNamingDecorator = JacksonDecoratorWithOptions<JsonNaming
 /**
  * Decorator type for {@link JsonSerialize}.
  */
-export declare type JsonSerializeDecorator = JacksonDecoratorWithOptions<JsonSerializeOptions, ClassDecorator & PropertyDecorator & MethodDecorator>;
+export declare type JsonSerializeDecorator = JacksonDecoratorWithOptions<JsonSerializeOptions, ClassDecorator & PropertyDecorator & ParameterDecorator & MethodDecorator>;
 /**
  * Decorator type for {@link JsonSubTypes}.
  */

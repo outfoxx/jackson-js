@@ -106,7 +106,7 @@ export type JsonNamingDecorator = JacksonDecoratorWithOptions<JsonNamingOptions,
  * Decorator type for {@link JsonSerialize}.
  */
 export type JsonSerializeDecorator = JacksonDecoratorWithOptions<JsonSerializeOptions,
-ClassDecorator & PropertyDecorator & MethodDecorator>;
+ClassDecorator & PropertyDecorator & ParameterDecorator & MethodDecorator>;
 /**
  * Decorator type for {@link JsonSubTypes}.
  */

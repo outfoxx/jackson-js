@@ -1,6 +1,6 @@
 {
   "name": "@outfoxx/jackson-js",
-  "version": "1.2.17",
+  "version": "1.2.18",
   "description": "JavaScript object serialization and deserialization library using decorators. It supports also advanced Object concepts such as polymorphism, Object identity and cyclic objects.",
   "author": {
     "name": "Lorenzo Pichilli",
