@@ -41,7 +41,7 @@ const serverConfig = {
 };
 
 const clientConfig = {
-  target: 'web',
+  target: 'webworker',
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'lib.js',
