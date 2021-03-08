@@ -11,7 +11,10 @@ export declare type Modify<T, R> = Omit<T, keyof R> & R;
 /**
  * Helper type that represents a general JavaScript type.
  */
-export declare type ClassType<T> = (new () => T) | (new (...args: any[]) => T) | ((...args: any[]) => T) | ((...args: any[]) => ((cls: any) => T));
+export declare type ClassType<T> = (new () => T) | (new (...args: any[]) => T) | ((...args: any[]) => T) | ((...args: any[]) => ((cls: any) => T)) | {
+    name: string;
+    prototype: T;
+};
 export declare type ArrayLengthMutationKeys = 'splice' | 'push' | 'pop' | 'shift' | 'unshift';
 export declare type FixedLengthArray<T, L extends number, TObj = [T, ...Array<T>]> = Pick<TObj, Exclude<keyof TObj, ArrayLengthMutationKeys>> & {
     [I: number]: T;
