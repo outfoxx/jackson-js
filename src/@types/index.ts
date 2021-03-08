@@ -31,7 +31,7 @@ export type Modify<T, R> = Omit<T, keyof R> & R;
  * Helper type that represents a general JavaScript type.
  */
 export type ClassType<T> = (new () => T) | (new (...args: any[]) => T) |
-((...args: any[]) => T) | ((...args: any[]) => ((cls: any) => T));
+((...args: any[]) => T) | ((...args: any[]) => ((cls: any) => T)) | { name: string; prototype: T };
 
 export type ArrayLengthMutationKeys = 'splice' | 'push' | 'pop' | 'shift' |  'unshift';
 
